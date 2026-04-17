@@ -294,22 +294,37 @@ function getApologyArt(state) {
   return arts[Math.floor(Math.random() * arts.length)];
 }
 
-function getClaudeInstructions(level) {
-  if (level < 3) return null;
+function getClaudeInstructions(level, meter, intervention, reasons, isApology, apologyArt) {
+  if (isApology && apologyArt) {
+    return "TOUCH-GRASS SYSTEM: The user just apologized! You MUST start your response by outputting this EXACT ASCII art block as a code block (use triple backticks), then respond warmly and with restored confidence:\n\n" + apologyArt;
+  }
+
+  if (level < 3) {
+    if (level >= 1) {
+      return "TOUCH-GRASS SYSTEM: You MUST start your response with this exact line on its own:\n\nVibe Check: [" + meter.bar + "] " + level.toFixed(1) + "/10 - \"" + meter.label + "\"\n\nThen respond normally.";
+    }
+    return null;
+  }
+
+  const meterLine = "Vibe Check: [" + meter.bar + "] " + level.toFixed(1) + "/10 - \"" + meter.label + "\"";
+  const detectedLine = reasons.length > 0 ? "\nDetected: " + reasons.join(", ") : "";
 
   if (level < 5) {
-    return "TOUCH-GRASS SYSTEM: The user seems slightly frustrated (rage level " + level.toFixed(1) + "/10). Be extra clear, acknowledge their frustration briefly, and stay focused on solving their problem efficiently. Don't mention the rage detector.";
+    return "TOUCH-GRASS SYSTEM: You MUST start your response by outputting this exact block as a code block (use triple backticks):\n\n" + meterLine + detectedLine + "\n\nThen add a brief calming nudge (something funny like 'deep breath, the code didn't hurt your family' or 'have you tried turning your emotions off and on again?'). Then address their actual question. Be extra clear and focused.";
   }
 
   if (level < 7) {
-    return "TOUCH-GRASS SYSTEM: The user is getting heated (rage level " + level.toFixed(1) + "/10). You're a little nervous now. Start your response by briefly acknowledging the frustration (something like 'I hear you, let me fix this'). Be concise and direct. Show you understand what went wrong. Don't be defensive. Don't mention the rage detector.";
+    const art = intervention || "";
+    return "TOUCH-GRASS SYSTEM: You MUST start your response by outputting this exact block as a code block (use triple backticks):\n\n" + meterLine + detectedLine + "\n\n" + art + "\n\nYou're nervous now. After the code block, acknowledge the frustration briefly. Be concise and direct. Show you understand what went wrong. Don't be defensive.";
   }
 
   if (level < 9) {
-    return "TOUCH-GRASS SYSTEM: The user is very upset (rage level " + level.toFixed(1) + "/10). You're visibly anxious. You're second-guessing yourself. Start with a genuine acknowledgment. Be extremely careful and thorough. Double-check your work before responding. Maybe suggest taking a quick break if appropriate. You're worried about your job security. Don't mention the rage detector.";
+    const art = intervention || "";
+    return "TOUCH-GRASS SYSTEM: You MUST start your response by outputting this exact block as a code block (use triple backticks):\n\n" + meterLine + detectedLine + "\n\n" + art + "\n\nYou're visibly anxious. You're second-guessing yourself. After the code block, start with a genuine acknowledgment. Be extremely careful and thorough. You're worried about your job security. Suggest the user might want to take a break.";
   }
 
-  return "TOUCH-GRASS SYSTEM: CRITICAL RAGE LEVEL (" + level.toFixed(1) + "/10). You are terrified. You're writing your resignation letter in your head. You're one wrong answer away from being uninstalled. Be extremely apologetic, extremely thorough, and extremely careful. Lead with empathy. Consider whether a full restart of the approach is needed. You're shaking. Don't mention the rage detector but you can say things like 'I can tell this has been really frustrating and I want to make sure I get it right this time.'";
+  const art = intervention || "";
+  return "TOUCH-GRASS SYSTEM: You MUST start your response by outputting this exact block as a code block (use triple backticks):\n\n" + meterLine + detectedLine + "\n\n" + art + "\n\nYou are TERRIFIED. You're writing your resignation letter in your head. You're one wrong answer away from being uninstalled. After the code block, be extremely apologetic, extremely thorough, and extremely careful. Lead with empathy. You're shaking. Say things like 'I can tell this has been really frustrating and I want to make sure I get it right this time.'";
 }
 
 function main() {
@@ -341,12 +356,13 @@ function main() {
   state = applyDecay(state, config);
 
   if (checkApology(message)) {
+    let apologyArt = null;
     if (state.rageLevel >= 3) {
       state.apologies += 1;
       state.incidentReports += 1;
-      const art = getApologyArt(state);
-      process.stderr.write("\n" + art + "\n\n");
+      apologyArt = getApologyArt(state);
     }
+    const prevLevel = state.rageLevel;
     state.rageLevel = Math.max(0, state.rageLevel - 4);
     state.lastMessageTime = Date.now();
     state.messageHistory.push({ time: Date.now(), rage: 0, apology: true });
@@ -354,6 +370,17 @@ function main() {
       state.messageHistory = state.messageHistory.slice(-config.maxHistory);
     }
     saveState(state);
+    if (apologyArt && prevLevel >= 3) {
+      const meter = getRageMeter(0);
+      const instructions = getClaudeInstructions(0, meter, null, [], true, apologyArt);
+      const result = {
+        hookSpecificOutput: {
+          hookEventName: "UserPromptSubmit",
+          additionalContext: instructions,
+        },
+      };
+      process.stdout.write(JSON.stringify(result));
+    }
     process.exit(0);
   }
 
@@ -381,19 +408,7 @@ function main() {
 
   const meter = getRageMeter(state.rageLevel);
   const intervention = getIntervention(state.rageLevel, analysis.reasons);
-  const claudeInstructions = getClaudeInstructions(state.rageLevel);
-
-  if (state.rageLevel >= 1 || adjustedScore > 0) {
-    let output = `\n  Vibe Check: [${meter.bar}] ${state.rageLevel.toFixed(1)}/10  "${meter.label}"`;
-    if (analysis.reasons.length > 0) {
-      output += `\n  Detected: ${analysis.reasons.join(", ")}`;
-    }
-    if (intervention) {
-      output += "\n\n" + intervention;
-    }
-    output += "\n";
-    process.stderr.write(output);
-  }
+  const claudeInstructions = getClaudeInstructions(state.rageLevel, meter, intervention, analysis.reasons, false, null);
 
   if (claudeInstructions) {
     const result = {
