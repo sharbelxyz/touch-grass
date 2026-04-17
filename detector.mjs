@@ -332,7 +332,7 @@ function main() {
     process.exit(0);
   }
 
-  const message = hookData?.message?.content || hookData?.prompt || "";
+  const message = hookData?.prompt || hookData?.message?.content || "";
   if (!message || message.startsWith("/")) {
     process.exit(0);
   }
@@ -396,7 +396,12 @@ function main() {
   }
 
   if (claudeInstructions) {
-    const result = { result: claudeInstructions };
+    const result = {
+      hookSpecificOutput: {
+        hookEventName: "UserPromptSubmit",
+        additionalContext: claudeInstructions,
+      },
+    };
     process.stdout.write(JSON.stringify(result));
   }
 
