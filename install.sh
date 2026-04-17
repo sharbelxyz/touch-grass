@@ -34,13 +34,16 @@ if command -v node >/dev/null 2>&1; then
     if (!settings.hooks.UserPromptSubmit) settings.hooks.UserPromptSubmit = [];
 
     const hookExists = settings.hooks.UserPromptSubmit.some(h =>
-      h.command && h.command.includes('touch-grass')
+      h.hooks && h.hooks.some(inner => inner.command && inner.command.includes('touch-grass'))
     );
 
     if (!hookExists) {
       settings.hooks.UserPromptSubmit.push({
-        type: 'command',
-        command: 'node $HOME/.touch-grass/detector.mjs'
+        matcher: '',
+        hooks: [{
+          type: 'command',
+          command: 'node \$HOME/.touch-grass/detector.mjs'
+        }]
       });
       fs.writeFileSync('$CLAUDE_SETTINGS', JSON.stringify(settings, null, 2));
       console.log('  [OK] Hook added to Claude Code settings');
@@ -54,8 +57,13 @@ else
   echo '  "hooks": {'
   echo '    "UserPromptSubmit": ['
   echo '      {'
-  echo '        "type": "command",'
-  echo "        \"command\": \"node $HOME/.touch-grass/detector.mjs\""
+  echo '        "matcher": "",'
+  echo '        "hooks": ['
+  echo '          {'
+  echo '            "type": "command",'
+  echo "            \"command\": \"node \$HOME/.touch-grass/detector.mjs\""
+  echo '          }'
+  echo '        ]'
   echo '      }'
   echo '    ]'
   echo '  }'

@@ -16,7 +16,7 @@ if [ -f "$CLAUDE_SETTINGS" ] && command -v node >/dev/null 2>&1; then
     const settings = JSON.parse(fs.readFileSync('$CLAUDE_SETTINGS', 'utf-8'));
     if (settings.hooks && settings.hooks.UserPromptSubmit) {
       settings.hooks.UserPromptSubmit = settings.hooks.UserPromptSubmit.filter(h =>
-        !(h.command && h.command.includes('touch-grass'))
+        !(h.hooks && h.hooks.some(inner => inner.command && inner.command.includes('touch-grass')))
       );
       if (settings.hooks.UserPromptSubmit.length === 0) {
         delete settings.hooks.UserPromptSubmit;
