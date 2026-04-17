@@ -1,0 +1,8 @@
+{
+  "enabled": true,
+  "sensitivity": 1.0,
+  "decayMinutes": 2,
+  "decayAmount": 1,
+  "maxHistory": 20,
+  "customTriggers": []
+}

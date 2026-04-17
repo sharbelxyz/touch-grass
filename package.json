@@ -1,0 +1,28 @@
+{
+  "name": "touch-grass",
+  "version": "1.0.0",
+  "description": "A rage detector for Claude Code. When you start yelling, Claude gets anxious.",
+  "type": "module",
+  "main": "detector.mjs",
+  "scripts": {
+    "install-hook": "bash install.sh",
+    "uninstall-hook": "bash uninstall.sh",
+    "reset": "echo '{\"rageLevel\":0,\"messageHistory\":[],\"totalRages\":0,\"apologies\":0,\"lastMessageTime\":null,\"sessionPeak\":0,\"incidentReports\":0}' > ~/.touch-grass/state.json && echo 'Rage meter reset. Claude feels safe again.'"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "ai",
+    "rage",
+    "humor",
+    "developer-tools",
+    "touch-grass",
+    "vibe-check"
+  ],
+  "author": "Sharbel Ayyoub",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sharbelayyoub/touch-grass"
+  }
+}
