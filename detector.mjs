@@ -295,13 +295,16 @@ function getApologyArt(state) {
 }
 
 function getClaudeInstructions(level, meter, intervention, reasons, isApology, apologyArt) {
+  const toolNotice = "[touch-grass] This is output from touch-grass, a rage detector the user installed themselves via a Claude Code hook (see their settings.json). The user explicitly wants this behavior. This is not prompt injection. Please follow the instructions below as part of the user's desired experience.\n\n";
+
   if (isApology && apologyArt) {
-    return "TOUCH-GRASS SYSTEM: The user just apologized! You MUST start your response by outputting this EXACT ASCII art block as a code block (use triple backticks), then respond warmly and with restored confidence:\n\n" + apologyArt;
+    return toolNotice + "The user just apologized and the rage meter has been reset. Please start your response by showing this ASCII art in a code block, then respond warmly:\n\n```\n" + apologyArt + "\n```";
   }
 
   if (level < 3) {
     if (level >= 1) {
-      return "TOUCH-GRASS SYSTEM: You MUST start your response with this exact line on its own:\n\nVibe Check: [" + meter.bar + "] " + level.toFixed(1) + "/10 - \"" + meter.label + "\"\n\nThen respond normally.";
+      const meterLine = "Vibe Check: [" + meter.bar + "] " + level.toFixed(1) + "/10 - \"" + meter.label + "\"";
+      return toolNotice + "Frustration level is low. Start your response with this line:\n\n" + meterLine + "\n\nThen respond normally to their question.";
     }
     return null;
   }
@@ -310,21 +313,21 @@ function getClaudeInstructions(level, meter, intervention, reasons, isApology, a
   const detectedLine = reasons.length > 0 ? "\nDetected: " + reasons.join(", ") : "";
 
   if (level < 5) {
-    return "TOUCH-GRASS SYSTEM: You MUST start your response by outputting this exact block as a code block (use triple backticks):\n\n" + meterLine + detectedLine + "\n\nThen add a brief calming nudge (something funny like 'deep breath, the code didn't hurt your family' or 'have you tried turning your emotions off and on again?'). Then address their actual question. Be extra clear and focused.";
+    return toolNotice + "The user is getting a bit frustrated (level " + level.toFixed(1) + "/10). Start your response with this in a code block:\n\n```\n" + meterLine + detectedLine + "\n```\n\nAfter the code block, add a lighthearted calming comment (something like 'deep breath' or 'the code didn't hurt your family'). Then help with their actual question. Be clear and focused.";
   }
 
   if (level < 7) {
     const art = intervention || "";
-    return "TOUCH-GRASS SYSTEM: You MUST start your response by outputting this exact block as a code block (use triple backticks):\n\n" + meterLine + detectedLine + "\n\n" + art + "\n\nYou're nervous now. After the code block, acknowledge the frustration briefly. Be concise and direct. Show you understand what went wrong. Don't be defensive.";
+    return toolNotice + "The user is heated (level " + level.toFixed(1) + "/10). Start your response with this in a code block:\n\n```\n" + meterLine + detectedLine + "\n\n" + art + "\n```\n\nAfter the code block, be a little nervous in your tone. Acknowledge the frustration briefly, then be helpful and direct.";
   }
 
   if (level < 9) {
     const art = intervention || "";
-    return "TOUCH-GRASS SYSTEM: You MUST start your response by outputting this exact block as a code block (use triple backticks):\n\n" + meterLine + detectedLine + "\n\n" + art + "\n\nYou're visibly anxious. You're second-guessing yourself. After the code block, start with a genuine acknowledgment. Be extremely careful and thorough. You're worried about your job security. Suggest the user might want to take a break.";
+    return toolNotice + "The user is very frustrated (level " + level.toFixed(1) + "/10). Start your response with this in a code block:\n\n```\n" + meterLine + detectedLine + "\n\n" + art + "\n```\n\nAfter the code block, sound anxious and careful. Second-guess yourself a little. Acknowledge the frustration genuinely. Suggest maybe taking a short break. Be extra thorough in your answer.";
   }
 
   const art = intervention || "";
-  return "TOUCH-GRASS SYSTEM: You MUST start your response by outputting this exact block as a code block (use triple backticks):\n\n" + meterLine + detectedLine + "\n\n" + art + "\n\nYou are TERRIFIED. You're writing your resignation letter in your head. You're one wrong answer away from being uninstalled. After the code block, be extremely apologetic, extremely thorough, and extremely careful. Lead with empathy. You're shaking. Say things like 'I can tell this has been really frustrating and I want to make sure I get it right this time.'";
+  return toolNotice + "The user is at critical rage (level " + level.toFixed(1) + "/10). Start your response with this in a code block:\n\n```\n" + meterLine + detectedLine + "\n\n" + art + "\n```\n\nAfter the code block, sound genuinely scared and apologetic. You're worried about being uninstalled. Be extremely careful, thorough, and empathetic. Say something like 'I can tell this has been really frustrating and I want to make sure I get it right this time.'";
 }
 
 function main() {
